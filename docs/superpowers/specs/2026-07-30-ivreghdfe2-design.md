@@ -1,4 +1,4 @@
-# ivreghdfef2 设计文档
+# ivreghdfe2 设计文档
 
 日期：2026-07-30
 
@@ -24,7 +24,7 @@ reghdfe y  xhat control, absorb(...)    // 第二阶段
 
 ## 2. 目标
 
-新命令 `ivreghdfef2`：
+新命令 `ivreghdfe2`：
 
 1. 语法贴近 `ivreghdfe`（括号语法 + 选项直写），不再用 `ivreghdfef` 的 `iv()` / `opt()` / `regopt()` 包装。
 2. 输出 `ivreghdfef` 那套额外统计量（CD-Wald F、KP rk Wald F、KP rk LM、Hansen J）。
@@ -80,7 +80,7 @@ if "`nopartialsmall'"=="" { local sdofminus = `sdofminus'+`partial_ct' }   // 69
 ## 4. 语法
 
 ```stata
-ivreghdfef2 depvar [exogvars] (endog = instruments) [if] [in] [weight] ,
+ivreghdfe2 depvar [exogvars] (endog = instruments) [if] [in] [weight] ,
     Absorb(absvars) [ FIRST STOre(name) Format(%fmt) NOSUMmary  其他 ivreghdfe 选项 ]
 ```
 
@@ -139,13 +139,13 @@ Hansen J Test:  1.2345
 
 - 沿用参照 run 的全部 scalars / macros / matrices（`N`、`df_m`、`rmse`、`rss`、`r2`、`r2_a`、`j`、`jdf`、`jp`、`idstat`、`idp`、`cdf`、`rkf`、`widstat`、`df_a`、`N_hdfe`、`N_clust`、`clustvar`、`depvar`、`instd`、`insts`、`exexog`、`inexog`、`absvar` 等）。
 - 新增：`e(rklm)`、`e(rklmp)`、`e(hansenj)`、`e(hansenjp)`（`e(cdf)`、`e(rkf)` 参照 run 本来就有）、`e(smallfac)`、`e(chk_b)`、`e(chk_v)`、`e(df_r_ref)`、`e(fsb)`、`e(fsp)`。
-- `e(cmd) = "ivreghdfef2"`、`e(cmdline)`、`e(endovars)`、`e(exexvars)`、`e(inexogvars)`、`e(absvarlist)`、`e(fsstored)`、`e(ssstored)`。
+- `e(cmd) = "ivreghdfe2"`、`e(cmdline)`、`e(endovars)`、`e(exexvars)`、`e(inexogvars)`、`e(absvarlist)`、`e(fsstored)`、`e(ssstored)`。
 - `e(b)`、`e(V)` 含 `_cons`。
 - `e(rklmp)` / `e(hansenjp)` 直接取 `ivreg2` 的 `e(idp)` / `e(jp)`，不自己重算。旧 `ivreghdfef` 用 `chi2tail(e(exexog_ct), ...)`，在单内生变量下恰好等于正确的 `L-K+1` 与 `L-K`，但多内生变量时会错。
 
 ## 8. 测试方案
 
-`tests/test_ivreghdfef2.do`，数据用 `webuse nlswork`，共 68 项断言。
+`tests/test_ivreghdfe2.do`，数据用 `webuse nlswork`，共 68 项断言。
 
 1. **对齐 `ivreghdfe`**：unadjusted / robust / cluster / 双向 cluster，各带与不带 `small`，共 9 组。
    - 注意：斜率块是从参照 run 复制过来的，所以直接比对 `e(b)` / SE 必然相等，**这一项只验证管道（列名映射、顺序、样本）**。真正的数值校验靠命令内部暴露出来的 `e(chk_b)`（原始增广估计与参照的最大相对系数差）与 `e(chk_v)`（方差比的离散度）。断言 `chk_b < 1e-10`、`chk_v < 1e-7`。
@@ -153,7 +153,7 @@ Hansen J Test:  1.2345
 3. **退化检验（对 `_cons` 的 VCE 唯一的硬检验）**：拿内生变量的副本当工具变量，此时 2SLS ≡ OLS，`e(b)` 与 `e(V)` 应与 `reghdfe y x controls, absorb() <同 vce>` 逐元素相等。注意不能写 `(x = x)`，`ivreg2` 不接受内生变量出现在自己的工具变量列表里，要先 `gen` 一个副本。
    - **嵌套 cluster 单列一项**：cluster 变量同时被 absorb 时，`reghdfe` 会多减一个自由度（`reghdfe.mata` 4026 行的 `nested_adj`）而 `ivreghdfe` 不减，两者差一个 1/N 量级的标量。断言"**所有系数（含 `_cons`）的 SE 比值是同一个标量**"——这仍然是对 `_cons` 方差的真实检验：如果 `_cons` 那一行算坏了，它就不会跟着斜率走。
 4. **与旧命令对比**：与 `ivreghdfef` 点估计相同、SE 不同，记录差异幅度作为"修了什么"的证据。旧命令会 `drop` 再重建内生变量，测试里要 `preserve` / `restore` 包住。
-5. **出表与 replay**：`esttab` / `reg2docx` 跑通、`ivreghdfef2` 空调用可重放。
+5. **出表与 replay**：`esttab` / `reg2docx` 跑通、`ivreghdfe2` 空调用可重放。
 6. **边界**：多内生变量、`if` / `in`、三种权重、ts 算子、`absorb()` 留空、factor variable 与 `partial()` 被拒。
 
 ### 实测结果（68/68 通过）
@@ -180,12 +180,12 @@ Hansen J Test:  1.2345
 ## 10. 文件清单
 
 ```
-ivreghdfef2.ado
-ivreghdfef2.sthlp
-ivreghdfef2.pkg
+ivreghdfe2.ado
+ivreghdfe2.sthlp
+ivreghdfe2.pkg
 stata.toc
 README.md
 LICENSE
-tests/test_ivreghdfef2.do
-docs/superpowers/specs/2026-07-30-ivreghdfef2-design.md
+tests/test_ivreghdfe2.do
+docs/superpowers/specs/2026-07-30-ivreghdfe2-design.md
 ```

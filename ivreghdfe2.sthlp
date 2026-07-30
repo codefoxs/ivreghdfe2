@@ -5,18 +5,18 @@
 {vieweralsosee "[R] ivreghdfe" "help ivreghdfe"}{...}
 {vieweralsosee "[R] ivreghdfef" "help ivreghdfef"}{...}
 {vieweralsosee "" "--"}{...}
-{viewerjumpto "Syntax" "ivreghdfef2##syntax"}{...}
-{viewerjumpto "Description" "ivreghdfef2##description"}{...}
-{viewerjumpto "Options" "ivreghdfef2##options"}{...}
-{viewerjumpto "How it works" "ivreghdfef2##method"}{...}
-{viewerjumpto "The constant term" "ivreghdfef2##cons"}{...}
-{viewerjumpto "Limitations" "ivreghdfef2##limits"}{...}
-{viewerjumpto "Examples" "ivreghdfef2##examples"}{...}
-{viewerjumpto "Stored results" "ivreghdfef2##results"}{...}
+{viewerjumpto "Syntax" "ivreghdfe2##syntax"}{...}
+{viewerjumpto "Description" "ivreghdfe2##description"}{...}
+{viewerjumpto "Options" "ivreghdfe2##options"}{...}
+{viewerjumpto "How it works" "ivreghdfe2##method"}{...}
+{viewerjumpto "The constant term" "ivreghdfe2##cons"}{...}
+{viewerjumpto "Limitations" "ivreghdfe2##limits"}{...}
+{viewerjumpto "Examples" "ivreghdfe2##examples"}{...}
+{viewerjumpto "Stored results" "ivreghdfe2##results"}{...}
 {title:Title}
 
 {p2colset 5 22 24 2}{...}
-{p2col :{hi:ivreghdfef2} {hline 2}}ivreghdfe with a corrected second-stage VCE, a reported constant term, extra IV diagnostics, and both stages saved{p_end}
+{p2col :{hi:ivreghdfe2} {hline 2}}ivreghdfe with a corrected second-stage VCE, a reported constant term, extra IV diagnostics, and both stages saved{p_end}
 {p2colreset}{...}
 
 
@@ -24,7 +24,7 @@
 {title:Syntax}
 
 {p 8 16 2}
-{cmd:ivreghdfef2} {depvar} [{it:exogvars}] {cmd:(}{it:endog} {cmd:=} {it:instruments}{cmd:)}
+{cmd:ivreghdfe2} {depvar} [{it:exogvars}] {cmd:(}{it:endog} {cmd:=} {it:instruments}{cmd:)}
 {ifin} {weight} {cmd:,} {opth a:bsorb(reghdfe##absvar:absvars)}
 [{it:options}]
 
@@ -64,7 +64,7 @@ accepted and translated.{p_end}
 {title:Description}
 
 {pstd}
-{cmd:ivreghdfef2} estimates a 2SLS model with high-dimensional fixed effects and
+{cmd:ivreghdfe2} estimates a 2SLS model with high-dimensional fixed effects and
 adds three things that {help ivreghdfe} does not provide:
 
 {phang2}1. a reported {cmd:_cons} row, with a valid standard error;{p_end}
@@ -87,7 +87,7 @@ different and no rescaling can repair it. On the worked example below,
 about 11%.
 
 {pstd}
-{cmd:ivreghdfef2} instead takes its slopes and its variance matrix from
+{cmd:ivreghdfe2} instead takes its slopes and its variance matrix from
 {cmd:ivreghdfe} itself, so they are correct by construction, and derives the
 constant term without disturbing them.
 
@@ -98,7 +98,7 @@ constant term without disturbing them.
 {pstd}
 {cmd:absorb()} makes {cmd:ivreghdfe} partial the constant out (it forces
 {opt noconstant} internally), which is why no {cmd:_cons} row is available to
-begin with. {cmd:ivreghdfef2} recovers one as follows.
+begin with. {cmd:ivreghdfe2} recovers one as follows.
 
 {phang2}
 {bf:1. Reference run.} {cmd:ivreghdfe} is run on the model as typed. Its
@@ -128,7 +128,7 @@ including the {cmd:_cons} row. No variance formula is reimplemented here.{p_end}
 The scalar small-sample factor is then recovered as the ratio of the reference
 variances to the augmented ones. Because {cmd:ivreg2}'s small-sample correction
 multiplies the whole matrix by one number, that ratio must be the same for every
-coefficient; {cmd:ivreghdfef2} checks that it is and aborts if it is not. This
+coefficient; {cmd:ivreghdfe2} checks that it is and aborts if it is not. This
 sidesteps having to reproduce {cmd:ivreghdfe}'s internal degrees-of-freedom
 bookkeeping, and doubles as a check that the augmented run really reproduced the
 reference fit. The outcome is left in {cmd:e(chk_b)}, {cmd:e(chk_v)} and
@@ -196,10 +196,10 @@ compute HAC standard errors, so the reported first stage falls back to
 {phang2}{cmd:. webuse nlswork}{p_end}
 
 {pstd}Basic use{p_end}
-{phang2}{cmd:. ivreghdfef2 ln_wage age tenure not_smsa south (ttl_exp = hours union), absorb(idcode year) cluster(idcode)}{p_end}
+{phang2}{cmd:. ivreghdfe2 ln_wage age tenure not_smsa south (ttl_exp = hours union), absorb(idcode year) cluster(idcode)}{p_end}
 
 {pstd}Show the first stage and save both stages{p_end}
-{phang2}{cmd:. ivreghdfef2 ln_wage age tenure not_smsa south (ttl_exp = hours union), absorb(idcode year) cluster(idcode) first store(IV)}{p_end}
+{phang2}{cmd:. ivreghdfe2 ln_wage age tenure not_smsa south (ttl_exp = hours union), absorb(idcode year) cluster(idcode) first store(IV)}{p_end}
 
 {pstd}Export a two-stage table{p_end}
 {phang2}{cmd:. esttab IV_first IV_second, se scalars(N r2_a cdf rkf rklm hansenj)}{p_end}
@@ -211,10 +211,10 @@ compute HAC standard errors, so the reported first stage falls back to
 {phang2}{cmd:      addfe("Id=Yes" "Year=Yes") mtitles("First stage" "Second stage")}{p_end}
 
 {pstd}Several endogenous regressors (first stages become {cmd:IV2_first1}, {cmd:IV2_first2}){p_end}
-{phang2}{cmd:. ivreghdfef2 ln_wage not_smsa south (ttl_exp tenure = hours union msp nev_mar), absorb(idcode year) cluster(idcode) store(IV2)}{p_end}
+{phang2}{cmd:. ivreghdfe2 ln_wage not_smsa south (ttl_exp tenure = hours union msp nev_mar), absorb(idcode year) cluster(idcode) store(IV2)}{p_end}
 
 {pstd}Set the display format of the summary block{p_end}
-{phang2}{cmd:. ivreghdfef2 ln_wage age tenure (ttl_exp = hours union), absorb(idcode year) cluster(idcode) f(%9.3f)}{p_end}
+{phang2}{cmd:. ivreghdfe2 ln_wage age tenure (ttl_exp = hours union), absorb(idcode year) cluster(idcode) f(%9.3f)}{p_end}
 
 {pstd}Confirm against {cmd:ivreghdfe} -- the slopes and standard errors match exactly{p_end}
 {phang2}{cmd:. ivreghdfe ln_wage age tenure not_smsa south (ttl_exp = hours union), absorb(idcode year) cluster(idcode)}{p_end}
@@ -224,7 +224,7 @@ compute HAC standard errors, so the reported first stage falls back to
 {title:Stored results}
 
 {pstd}
-{cmd:ivreghdfef2} keeps everything {cmd:ivreghdfe} stores in {cmd:e()} and adds
+{cmd:ivreghdfe2} keeps everything {cmd:ivreghdfe} stores in {cmd:e()} and adds
 the following.
 
 {synoptset 22 tabbed}{...}
@@ -241,7 +241,7 @@ the following.
 {synopt:{cmd:e(df_r_ref)}}residual degrees of freedom from the reference run{p_end}
 
 {p2col 5 22 26 2: Macros}{p_end}
-{synopt:{cmd:e(cmd)}}{cmd:ivreghdfef2}{p_end}
+{synopt:{cmd:e(cmd)}}{cmd:ivreghdfe2}{p_end}
 {synopt:{cmd:e(endovars)}}endogenous regressors{p_end}
 {synopt:{cmd:e(exexvars)}}excluded instruments{p_end}
 {synopt:{cmd:e(inexogvars)}}included exogenous regressors{p_end}
@@ -267,7 +267,7 @@ L-K, where L counts the excluded instruments and K the endogenous regressors.
 {title:Author}
 
 {pstd}codefoxs{break}
-{browse "https://github.com/codefoxs/ivreghdfef2"}
+{browse "https://github.com/codefoxs/ivreghdfe2"}
 
 
 {title:Also see}

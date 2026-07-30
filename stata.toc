@@ -1,3 +1,3 @@
 v 0.1.0
 
-p 'IVREGHDFEF2': module to run ivreghdfe with a corrected second-stage VCE, a constant term, extra IV diagnostics and both stages saved
+p 'IVREGHDFE2': module to run ivreghdfe with a corrected second-stage VCE, a constant term, extra IV diagnostics and both stages saved

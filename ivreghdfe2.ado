@@ -1,12 +1,12 @@
 *! Version 0.1.0 30Jul2026
-*! ivreghdfef2: ivreghdfe with a corrected second-stage VCE, a reported constant
+*! ivreghdfe2: ivreghdfe with a corrected second-stage VCE, a reported constant
 *!              term, extra IV diagnostics, and both stages saved as estimates.
 
-program define ivreghdfef2, eclass
+program define ivreghdfe2, eclass
     version 14
 
     if replay() {
-        if `"`e(cmd)'"' != "ivreghdfef2" error 301
+        if `"`e(cmd)'"' != "ivreghdfe2" error 301
         Display
         exit
     }
@@ -20,7 +20,7 @@ end
 * Estimate
 * ---------------------------------------------------------------------------
 program define Estimate, eclass
-    local cmdline `"ivreghdfef2 `0'"'
+    local cmdline `"ivreghdfe2 `0'"'
 
     syntax anything(equalok) [if] [in] [aw fw pw/] [,   ///
         Absorb(string)                                  ///
@@ -54,7 +54,7 @@ program define Estimate, eclass
 
     * ---------------------------------------------------------------- guards
     if `"`partial'"' != "" {
-        di as err "option partial() is not supported by ivreghdfef2"
+        di as err "option partial() is not supported by ivreghdfe2"
         di as err "  the small-sample dof arithmetic for partial() combined with"
         di as err "  absorb() cannot be reproduced from outside ivreg2"
         exit 198
@@ -130,7 +130,7 @@ program define Estimate, eclass
         |  regexm("`lv'", "^i[bn0-9()/., ]*\.")     ///
         |  regexm("`lv'", "^[0-9]+[bno]*\.")        ///
         |  regexm("`lv'", "^c\.") {
-            di as err "ivreghdfef2 does not support factor variables ({bf:`v'})"
+            di as err "ivreghdfe2 does not support factor variables ({bf:`v'})"
             di as err "  put categorical variables in absorb() instead"
             exit 198
         }
@@ -496,7 +496,7 @@ program define Estimate, eclass
     ereturn local dispfmt    "`format'"
     ereturn local nosummary  "`nosummary'"
     ereturn local cmdline    `"`cmdline'"'
-    ereturn local cmd        "ivreghdfef2"
+    ereturn local cmd        "ivreghdfe2"
 
     if "`store'" != "" {
         ereturn local ssstored "`store'_second"

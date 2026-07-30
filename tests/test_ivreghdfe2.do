@@ -1,5 +1,5 @@
-*! test_ivreghdfef2.do -- numerical correctness tests for ivreghdfef2
-*  Run with:  do tests/test_ivreghdfef2.do
+*! test_ivreghdfe2.do -- numerical correctness tests for ivreghdfe2
+*  Run with:  do tests/test_ivreghdfe2.do
 *  Results are written to tests/test_results.log
 
 clear all
@@ -7,11 +7,11 @@ set more off
 set linesize 160
 
 capture log close _all
-log using "D:/Code/Github/ivreghdfef2/tests/test_results.log", replace text
+log using "D:/Code/Github/ivreghdfe2/tests/test_results.log", replace text
 
-adopath ++ "D:/Code/Github/ivreghdfef2"
+adopath ++ "D:/Code/Github/ivreghdfe2"
 discard
-which ivreghdfef2
+which ivreghdfe2
 
 global NFAIL 0
 global NPASS 0
@@ -103,7 +103,7 @@ local TOL tolerance(1e-10)
 * TEST 1  slopes and standard errors must equal ivreghdfe
 * =======================================================================
 di as res _n "{hline 70}"
-di as res "TEST 1  ivreghdfef2 vs ivreghdfe (slopes and SEs)"
+di as res "TEST 1  ivreghdfe2 vs ivreghdfe (slopes and SEs)"
 di as res "{hline 70}"
 
 local vcelist `" " " "robust" "cluster(idcode)" "cluster(ind_code)" "cluster(idcode year)" "small" "small robust" "small cluster(idcode)" "small cluster(ind_code)" "'
@@ -116,7 +116,7 @@ foreach o of local vcelist {
     matrix `b1' = e(b)
     sevec `s1'
 
-    qui ivreghdfef2 `Y' `C' (`X' = `Z'), `FE' `TOL' `o'
+    qui ivreghdfe2 `Y' `C' (`X' = `Z'), `FE' `TOL' `o'
     tempname b2 s2
     matrix `b2' = e(b)
     sevec `s2'
@@ -146,7 +146,7 @@ di as res _n "{hline 70}"
 di as res "TEST 2  constant term equals ybar - Xbar'b"
 di as res "{hline 70}"
 
-qui ivreghdfef2 `Y' `C' (`X' = `Z'), `FE' `TOL' cluster(idcode)
+qui ivreghdfe2 `Y' `C' (`X' = `Z'), `FE' `TOL' cluster(idcode)
 tempname bc
 matrix `bc' = e(b)
 tempvar smp
@@ -193,12 +193,12 @@ foreach oiv of local ivvce {
     matrix `bo' = e(b)
     sevec `so'
 
-    qui ivreghdfef2 `Y' `C' (`X' = ttl_exp_z), `FE' `TOL' small `oiv'
+    qui ivreghdfe2 `Y' `C' (`X' = ttl_exp_z), `FE' `TOL' small `oiv'
     tempname bi si
     matrix `bi' = e(b)
     sevec `si'
 
-    di as txt "  spec `i': reghdfe [`o']  vs  ivreghdfef2 [`oiv']"
+    di as txt "  spec `i': reghdfe [`o']  vs  ivreghdfe2 [`oiv']"
     mchk degen_b`i'  `bo' `bi' 1e-7
     mchk degen_se`i' `so' `si' 1e-6
 }
@@ -213,7 +213,7 @@ qui reghdfe `Y' `X' `C', `FE' `TOL' vce(cluster idcode)
 tempname bo4 so4
 matrix `bo4' = e(b)
 sevec `so4'
-qui ivreghdfef2 `Y' `C' (`X' = ttl_exp_z), `FE' `TOL' small cluster(idcode)
+qui ivreghdfe2 `Y' `C' (`X' = ttl_exp_z), `FE' `TOL' small cluster(idcode)
 tempname bi4 si4
 matrix `bi4' = e(b)
 sevec `si4'
@@ -239,7 +239,7 @@ di as res _n "{hline 70}"
 di as res "TEST 4  ivreghdfef comparison (same b, different SE)"
 di as res "{hline 70}"
 
-qui ivreghdfef2 `Y' `C' (`X' = `Z'), `FE' `TOL' cluster(idcode)
+qui ivreghdfe2 `Y' `C' (`X' = `Z'), `FE' `TOL' cluster(idcode)
 tempname bnew snew
 matrix `bnew' = e(b)
 sevec `snew'
@@ -258,7 +258,7 @@ if `rc' == 0 {
     mchk old_b `bold' `bnew' 1e-6
     local seo = `sold'[1, colnumb(`sold', "`X'")]
     local sen = `snew'[1, colnumb(`snew', "`X'")]
-    di as txt "  SE for `X':  ivreghdfef = " %12.8f `seo' "   ivreghdfef2 = " %12.8f `sen'
+    di as txt "  SE for `X':  ivreghdfef = " %12.8f `seo' "   ivreghdfe2 = " %12.8f `sen'
     di as txt "  ivreghdfef understates the SE by " %6.2f (1 - `seo'/`sen')*100 "%"
     if abs(`seo'/`sen' - 1) < 1e-6 {
         di as err "FAIL  old_se_differs  (the old SE was already correct?)"
@@ -285,7 +285,7 @@ tempname bm1 sm1
 matrix `bm1' = e(b)
 sevec `sm1'
 
-qui ivreghdfef2 `Y' not_smsa south (ttl_exp tenure = hours union nev_mar msp), ///
+qui ivreghdfe2 `Y' not_smsa south (ttl_exp tenure = hours union nev_mar msp), ///
     `FE' `TOL' cluster(idcode) store(MULTI)
 tempname bm2 sm2
 matrix `bm2' = e(b)
@@ -318,7 +318,7 @@ foreach w in aweight fweight pweight {
     tempname bw1 sw1
     matrix `bw1' = e(b)
     sevec `sw1'
-    qui ivreghdfef2 `Y' `C' (`X' = `Z') [`w'=wks_work], `FE' `TOL' cluster(idcode)
+    qui ivreghdfe2 `Y' `C' (`X' = `Z') [`w'=wks_work], `FE' `TOL' cluster(idcode)
     tempname bw2 sw2
     matrix `bw2' = e(b)
     sevec `sw2'
@@ -330,7 +330,7 @@ qui ivreghdfe `Y' `C' (`X' = `Z') if race == 1 & year > 75, `FE' `TOL' cluster(i
 tempname bif1 sif1
 matrix `bif1' = e(b)
 sevec `sif1'
-qui ivreghdfef2 `Y' `C' (`X' = `Z') if race == 1 & year > 75, `FE' `TOL' cluster(idcode)
+qui ivreghdfe2 `Y' `C' (`X' = `Z') if race == 1 & year > 75, `FE' `TOL' cluster(idcode)
 tempname bif2 sif2
 matrix `bif2' = e(b)
 sevec `sif2'
@@ -342,7 +342,7 @@ qui ivreghdfe `Y' `C' (`X' = `Z'), cluster(idcode) small
 tempname bn1 sn1
 matrix `bn1' = e(b)
 sevec `sn1'
-qui ivreghdfef2 `Y' `C' (`X' = `Z'), cluster(idcode) small
+qui ivreghdfe2 `Y' `C' (`X' = `Z'), cluster(idcode) small
 tempname bn2 sn2
 matrix `bn2' = e(b)
 sevec `sn2'
@@ -362,7 +362,7 @@ capture noisily {
     tempname bt1 st1
     matrix `bt1' = e(b)
     sevec `st1'
-    qui ivreghdfef2 `Y' `C' L.hours (`X' = `Z'), `FE' `TOL' cluster(idcode)
+    qui ivreghdfe2 `Y' `C' L.hours (`X' = `Z'), `FE' `TOL' cluster(idcode)
     tempname bt2 st2
     matrix `bt2' = e(b)
     sevec `st2'
@@ -383,7 +383,7 @@ di as res _n "{hline 70}"
 di as res "TEST 8  unsupported syntax is refused"
 di as res "{hline 70}"
 
-capture ivreghdfef2 `Y' `C' i.race (`X' = `Z'), `FE'
+capture ivreghdfe2 `Y' `C' i.race (`X' = `Z'), `FE'
 if _rc == 198 {
     di as txt "pass  reject_factor_var"
     global NPASS = $NPASS + 1
@@ -393,7 +393,7 @@ else {
     global NFAIL = $NFAIL + 1
 }
 
-capture ivreghdfef2 `Y' `C' (`X' = `Z'), `FE' partial(age)
+capture ivreghdfe2 `Y' `C' (`X' = `Z'), `FE' partial(age)
 if _rc == 198 {
     di as txt "pass  reject_partial"
     global NPASS = $NPASS + 1
@@ -410,7 +410,7 @@ di as res _n "{hline 70}"
 di as res "TEST 9  display and table output"
 di as res "{hline 70}"
 
-ivreghdfef2 `Y' `C' (`X' = `Z'), `FE' `TOL' cluster(idcode) first store(IV)
+ivreghdfe2 `Y' `C' (`X' = `Z'), `FE' `TOL' cluster(idcode) first store(IV)
 
 capture which esttab
 if !_rc {
@@ -430,7 +430,7 @@ else {
 
 capture which reg2docx
 if !_rc {
-    capture reg2docx IV_first IV_second using "D:/Code/Github/ivreghdfef2/tests/_tmp_iv.docx", ///
+    capture reg2docx IV_first IV_second using "D:/Code/Github/ivreghdfe2/tests/_tmp_iv.docx", ///
         replace b(%12.4f) t(%12.4f) scalars(N(%12.0fc) r2_a(%12.4f) cdf(%12.4f) rkf(%12.4f))
     if _rc {
         di as err "FAIL  reg2docx (rc=" _rc ")"
@@ -439,7 +439,7 @@ if !_rc {
     else {
         di as txt "pass  reg2docx"
         global NPASS = $NPASS + 1
-        capture erase "D:/Code/Github/ivreghdfef2/tests/_tmp_iv.docx"
+        capture erase "D:/Code/Github/ivreghdfe2/tests/_tmp_iv.docx"
     }
 }
 else {
@@ -447,7 +447,7 @@ else {
 }
 
 * replay
-capture noisily ivreghdfef2
+capture noisily ivreghdfe2
 if _rc {
     di as err "FAIL  replay (rc=" _rc ")"
     global NFAIL = $NFAIL + 1

@@ -1,4 +1,4 @@
-# ivreghdfef2
+# ivreghdfe2
 
 `ivreghdfe` with a corrected second-stage VCE, a reported constant term, extra IV
 diagnostics, and both stages saved as estimation results.
@@ -24,7 +24,7 @@ repairs it.
 Measured on the example below, `ivreghdfef` understates the standard error on the
 endogenous regressor by **10.7%**, which turns a *p* = 0.006 into a *p* = 0.014.
 
-`ivreghdfef2` takes its slopes and variance matrix from `ivreghdfe` itself, so
+`ivreghdfe2` takes its slopes and variance matrix from `ivreghdfe` itself, so
 they are correct by construction, and derives the constant term without
 disturbing them.
 
@@ -32,8 +32,8 @@ disturbing them.
 
 ```stata
 * Latest version
-cap ado uninstall ivreghdfef2
-net install ivreghdfef2, from("https://raw.githubusercontent.com/codefoxs/ivreghdfef2/main/") replace
+cap ado uninstall ivreghdfe2
+net install ivreghdfe2, from("https://raw.githubusercontent.com/codefoxs/ivreghdfe2/main/") replace
 ```
 
 Requires [`ivreghdfe`](https://github.com/sergiocorreia/ivreghdfe),
@@ -45,7 +45,7 @@ Requires [`ivreghdfe`](https://github.com/sergiocorreia/ivreghdfe),
 The model is written the way `ivreghdfe` wants it, not the way `ivreghdfef` did:
 
 ```stata
-ivreghdfef2 depvar [exogvars] (endog = instruments) [if] [in] [weight] ,
+ivreghdfe2 depvar [exogvars] (endog = instruments) [if] [in] [weight] ,
     absorb(absvars) [first store(name) format(%fmt) nosummary  ...ivreghdfe options]
 ```
 
@@ -58,7 +58,7 @@ no more `iv()` / `opt()` / `regopt()` wrappers.
 ```stata
 webuse nlswork
 
-ivreghdfef2 ln_wage age tenure not_smsa south (ttl_exp = hours union), ///
+ivreghdfe2 ln_wage age tenure not_smsa south (ttl_exp = hours union), ///
     absorb(idcode year) cluster(idcode) first store(IV)
 
 esttab IV_first IV_second, se scalars(N r2_a cdf rkf rklm hansenj)
@@ -72,7 +72,7 @@ row. With several endogenous regressors the first stages become `IV_first1`,
 
 `absorb()` makes `ivreghdfe` partial the constant out (`ivreghdfe.ado` lines
 674–681 force `noconstant`), which is why there is no `_cons` row to report in
-the first place. `ivreghdfef2` recovers one like this:
+the first place. `ivreghdfe2` recovers one like this:
 
 1. **Reference run.** `ivreghdfe` on the model as typed. Its `e(sample)`,
    diagnostics, slopes and variance matrix are the authority for everything else.
@@ -103,7 +103,7 @@ the first place. `ivreghdfef2` recovers one like this:
 
 ## Correctness evidence
 
-`tests/test_ivreghdfef2.do` runs 68 checks on `nlswork` (68/68 passing). The ones
+`tests/test_ivreghdfe2.do` runs 68 checks on `nlswork` (68/68 passing). The ones
 that matter:
 
 - **Against `ivreghdfe`** across nine variance specifications (unadjusted,

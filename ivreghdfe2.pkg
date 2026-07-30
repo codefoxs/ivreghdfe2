@@ -1,0 +1,12 @@
+v 0.1.0
+d 'IVREGHDFE2': module to run ivreghdfe with a corrected second-stage VCE, a constant term, extra IV diagnostics and both stages saved
+d KW: Instrument variable
+d KW: Weak IV test
+d KW: Hansen J test
+d KW: High-dimensional fixed effects
+d
+d Distribution-Date: 20260730
+d
+
+f ivreghdfe2.ado
+f ivreghdfe2.sthlp
