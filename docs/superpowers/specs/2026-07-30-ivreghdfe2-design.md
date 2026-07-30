@@ -4,7 +4,7 @@
 
 ## 1. 背景与问题
 
-`ivreghdfef`（本作者早前的命令）用手工两阶段实现 IV：
+要在有高维固定效应的 IV 里同时拿到常数项和两阶段估计结果，常见做法是手工跑两阶段：
 
 ```stata
 reghdfe x  iv control, absorb(...)      // 第一阶段
@@ -26,8 +26,8 @@ reghdfe y  xhat control, absorb(...)    // 第二阶段
 
 新命令 `ivreghdfe2`：
 
-1. 语法贴近 `ivreghdfe`（括号语法 + 选项直写），不再用 `ivreghdfef` 的 `iv()` / `opt()` / `regopt()` 包装。
-2. 输出 `ivreghdfef` 那套额外统计量（CD-Wald F、KP rk Wald F、KP rk LM、Hansen J）。
+1. 语法贴近 `ivreghdfe`（括号语法 + 选项直写），不用额外的选项包装层。
+2. 输出四个 IV 诊断统计量（CD-Wald F、KP rk Wald F、KP rk LM、Hansen J）。
 3. **报告常数项**，并把**两个阶段**都保存成可 `esttab` / `reg2docx` 的估计结果。
 4. 第二阶段的标准误必须是正确的 2SLS 标准误，`_cons` 那一行也必须正确。
 
@@ -113,7 +113,7 @@ ivreghdfe2 depvar [exogvars] (endog = instruments) [if] [in] [weight] ,
    - `nooutput` 不只是为了输出干净：当被 absorb 的固定效应嵌套在 cluster 变量里时，残差在每个 cluster 内精确求和为零，于是新加的常数项那一列的 cluster score 恒为 0，`ivreg2` 会警告 moment covariance 矩阵秩亏（`ivreg2.ado` 1793 行判定、2577 行打印）。这条警告在这里是预期且无关的——所有对外报告的统计量都来自参照 run，警告只涉及增广 run 自己那个被丢弃的 J 统计量。`quietly` 拦不住它（`di in r`），`nooutput` 会整块跳过显示。
 6. **校验与标量缩放**。把 `e(b)` 的列名从临时变量映射回真实变量名，**按名字**逐一比对第 5 步与第 2 步的斜率，同时算出每个斜率的方差比 `f`。斜率相对误差 > 1e-5 直接 `error 498`；`f` 的离散度 > 1e-4 报错、> 1e-6 提示。然后 `V = f * V`（含 `_cons` 行），斜率块用参照值逐元素覆盖。绝不静默出错。
    - 阈值定在这里是量出来的：`f` 的离散度是 meat 矩阵条件数带来的浮点噪声，随 cluster 数减少而变大（3410 个 cluster 约 5e-11，12 个约 6.5e-9），且**与 `tolerance()` 无关**（1e-10 / 1e-12 / 1e-13 都是 6.503e-09）。结构性错误会给出 0.1–1 量级的离散度，所以 1e-4 的报错线留了充足余量。
-7. **Post**。`ereturn post b V, esample() depname() obs()`；`small` 时额外 `dof(df_r)`（`ereturn display` 靠 `e(df_r)` 决定显示 t 还是 z，这与 `ivreg2` 的 `small` 语义一致）。回填第 2 步抓下来的全部 `e()`，再补 `e(cdf)` `e(rkf)` `e(rklm)` `e(rklmp)` `e(hansenj)` `e(hansenjp)`（与 `ivreghdfef` 同名，`reg2docx ... scalars()` 可直接复用）。`est store name_second`。
+7. **Post**。`ereturn post b V, esample() depname() obs()`；`small` 时额外 `dof(df_r)`（`ereturn display` 靠 `e(df_r)` 决定显示 t 还是 z，这与 `ivreg2` 的 `small` 语义一致）。回填第 2 步抓下来的全部 `e()`，再补 `e(rklm)` `e(rklmp)` `e(hansenj)` `e(hansenjp)` 这几个短别名（`e(cdf)` / `e(rkf)` 参照 run 本来就有），让四个诊断量能直接写进 `reg2docx ... scalars()`。`est store name_second`。
 8. **显示**。紧凑表头（N、F、R²、absorbed FE）+ `ereturn display`（含 `_cons`）+ 汇总区。带 `first` 时先打第一阶段表。
 
 ## 6. 汇总区格式
@@ -141,7 +141,7 @@ Hansen J Test:  1.2345
 - 新增：`e(rklm)`、`e(rklmp)`、`e(hansenj)`、`e(hansenjp)`（`e(cdf)`、`e(rkf)` 参照 run 本来就有）、`e(smallfac)`、`e(chk_b)`、`e(chk_v)`、`e(df_r_ref)`、`e(fsb)`、`e(fsp)`。
 - `e(cmd) = "ivreghdfe2"`、`e(cmdline)`、`e(endovars)`、`e(exexvars)`、`e(inexogvars)`、`e(absvarlist)`、`e(fsstored)`、`e(ssstored)`。
 - `e(b)`、`e(V)` 含 `_cons`。
-- `e(rklmp)` / `e(hansenjp)` 直接取 `ivreg2` 的 `e(idp)` / `e(jp)`，不自己重算。旧 `ivreghdfef` 用 `chi2tail(e(exexog_ct), ...)`，在单内生变量下恰好等于正确的 `L-K+1` 与 `L-K`，但多内生变量时会错。
+- `e(rklmp)` / `e(hansenjp)` 直接取 `ivreg2` 的 `e(idp)` / `e(jp)`，不自己重算。自己算容易把自由度写错：KP rk LM 是 `L-K+1`，Hansen J 是 `L-K`（L = 排除性工具个数，K = 内生变量个数），只有 K=1 时才分别退化成 `L` 和 `L-1`。
 
 ## 8. 测试方案
 
@@ -152,11 +152,11 @@ Hansen J Test:  1.2345
 2. **`_cons` 等于 `ybar - Xbar'b`**（手工算）。
 3. **退化检验（对 `_cons` 的 VCE 唯一的硬检验）**：拿内生变量的副本当工具变量，此时 2SLS ≡ OLS，`e(b)` 与 `e(V)` 应与 `reghdfe y x controls, absorb() <同 vce>` 逐元素相等。注意不能写 `(x = x)`，`ivreg2` 不接受内生变量出现在自己的工具变量列表里，要先 `gen` 一个副本。
    - **嵌套 cluster 单列一项**：cluster 变量同时被 absorb 时，`reghdfe` 会多减一个自由度（`reghdfe.mata` 4026 行的 `nested_adj`）而 `ivreghdfe` 不减，两者差一个 1/N 量级的标量。断言"**所有系数（含 `_cons`）的 SE 比值是同一个标量**"——这仍然是对 `_cons` 方差的真实检验：如果 `_cons` 那一行算坏了，它就不会跟着斜率走。
-4. **与旧命令对比**：与 `ivreghdfef` 点估计相同、SE 不同，记录差异幅度作为"修了什么"的证据。旧命令会 `drop` 再重建内生变量，测试里要 `preserve` / `restore` 包住。
+4. **手工两阶段对比**：在测试里用 `reghdfe` → `predict` → `reghdfe` 现搭一个手工两阶段，断言它的点估计（内生变量与全部控制变量）与本命令相同、而内生变量的 SE 不同，并记录差异幅度作为"修了什么"的证据。这样测试不依赖任何第三方命令。
 5. **出表与 replay**：`esttab` / `reg2docx` 跑通、`ivreghdfe2` 空调用可重放。
 6. **边界**：多内生变量、`if` / `in`、三种权重、ts 算子、`absorb()` 留空、factor variable 与 `partial()` 被拒。
 
-### 实测结果（68/68 通过）
+### 实测结果（72/72 通过）
 
 | 检验 | 结果 |
 |---|---|
@@ -165,7 +165,8 @@ Hansen J Test:  1.2345
 | `_cons` = `ybar - Xbar'b` | 6.4e-12 |
 | 退化检验 SE vs `reghdfe`：unadjusted / robust / cluster | 4.3e-13 / 1.7e-12 / 1.5e-12 |
 | 嵌套 cluster 的公共标量 | 六个系数含 `_cons` 一致到 8.6e-12（标量 = 1.00002808633） |
-| 旧命令低估 `ttl_exp` 的 SE | 10.68%（0.03870 vs 0.04333，p 从 0.006 变 0.014） |
+| 手工两阶段的点估计 | 内生变量 3.3e-15，四个控制变量 ≤ 1.0e-15 |
+| 手工两阶段低估 `ttl_exp` 的 SE | 10.68%（0.03870 vs 0.04333，p 从 0.006 变 0.014） |
 
 ## 9. 刻意划出去的范围（写进 help）
 

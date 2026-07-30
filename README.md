@@ -3,10 +3,11 @@
 `ivreghdfe` with a corrected second-stage VCE, a reported constant term, extra IV
 diagnostics, and both stages saved as estimation results.
 
-## What this fixes
+## What this is for
 
-[`ivreghdfef`](https://github.com/codefoxs/ivreghdfef) produced a constant term
-and two stored stages by running 2SLS by hand:
+`ivreghdfe` does not report a constant term when `absorb()` is used, and does not
+leave both stages behind as estimation results. The usual workaround is to run
+2SLS by hand:
 
 ```stata
 reghdfe x  iv controls, absorb(...)   // first stage
@@ -14,15 +15,16 @@ predict xhat
 reghdfe y  xhat controls, absorb(...) // second stage
 ```
 
-The coefficients that returns are correct — 2SLS slopes really do equal an OLS
-regression on the fitted values. **The second-stage standard errors are not.** A
+That recovers the coefficients correctly — 2SLS slopes really do equal an OLS
+regression on the fitted values. **The standard errors it reports do not.** A
 manual second stage builds its residuals as `y - xhat*b`, while 2SLS requires
 `y - x*b`. Under homoskedasticity the two differ by a scalar; under `robust` or
 `cluster()` the meat of the sandwich is structurally different and no rescaling
 repairs it.
 
-Measured on the example below, `ivreghdfef` understates the standard error on the
-endogenous regressor by **10.7%**, which turns a *p* = 0.006 into a *p* = 0.014.
+Measured on the example below, the manual route understates the standard error on
+the endogenous regressor by **10.7%**, which turns a *p* = 0.006 into a
+*p* = 0.014.
 
 `ivreghdfe2` takes its slopes and variance matrix from `ivreghdfe` itself, so
 they are correct by construction, and derives the constant term without
@@ -42,7 +44,7 @@ Requires [`ivreghdfe`](https://github.com/sergiocorreia/ivreghdfe),
 
 ## Syntax
 
-The model is written the way `ivreghdfe` wants it, not the way `ivreghdfef` did:
+The model is written exactly the way `ivreghdfe` wants it:
 
 ```stata
 ivreghdfe2 depvar [exogvars] (endog = instruments) [if] [in] [weight] ,
@@ -50,8 +52,7 @@ ivreghdfe2 depvar [exogvars] (endog = instruments) [if] [in] [weight] ,
 ```
 
 Options such as `cluster()`, `robust`, `small`, `gmm2s`, `liml`, `bw()`,
-`kernel()` and `tolerance()` are written directly and passed straight through —
-no more `iv()` / `opt()` / `regopt()` wrappers.
+`kernel()` and `tolerance()` are written directly and passed straight through.
 
 ## Example
 
@@ -103,8 +104,8 @@ the first place. `ivreghdfe2` recovers one like this:
 
 ## Correctness evidence
 
-`tests/test_ivreghdfe2.do` runs 68 checks on `nlswork` (68/68 passing). The ones
-that matter:
+`tests/test_ivreghdfe2.do` runs 72 checks on `nlswork` (72/72 passing) and depends
+on nothing beyond `ivreghdfe`, `ivreg2` and `reghdfe`. The ones that matter:
 
 - **Against `ivreghdfe`** across nine variance specifications (unadjusted,
   `robust`, one- and two-way `cluster()`, each with and without `small`): the
@@ -112,10 +113,14 @@ that matter:
   reference agrees to `e(chk_b)` ≈ 4e-13 on coefficients, and the variance ratio
   is constant to between 1e-11 and 7e-9.
 - **The constant term's value** equals `ybar - Xbar'b` to 6e-12.
-- **The constant term's variance.** Using an endogenous regressor as its own
-  instrument makes 2SLS numerically identical to OLS, so the full `e(b)` and
+- **The constant term's variance.** Instrumenting an endogenous regressor with a
+  copy of itself makes 2SLS numerically identical to OLS, so the full `e(b)` and
   `e(V)` — `_cons` row included — must equal `reghdfe`'s. They match to 4e-13
   (unadjusted), 1.7e-12 (`robust`) and 1.5e-12 (`cluster()`).
+- **The manual two-stage failure mode**, rebuilt inline with `reghdfe`, `predict`
+  and `reghdfe`: its coefficients agree with `ivreghdfe2` to 3e-15 on both the
+  endogenous regressor and every control, while its standard error on the
+  endogenous regressor is 10.7% too small.
 - **Nested clustering.** Clustering on a panel id that is also absorbed is the
   one case where `reghdfe` and `ivreghdfe` genuinely disagree: `reghdfe` subtracts
   one extra degree of freedom, so the two differ by a single scalar of order
@@ -147,4 +152,4 @@ that matter:
 
 - https://github.com/sergiocorreia/ivreghdfe
 - https://github.com/sergiocorreia/reghdfe
-- https://github.com/codefoxs/ivreghdfef
+- http://fmwww.bc.edu/RePEc/bocode/i/ivreg2.html

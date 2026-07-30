@@ -232,45 +232,54 @@ di as txt "  common scalar = " %18.14f `rmin' "  (so reghdfe and ivreghdfe diffe
 schk nested_ratio_uniform `=(`rmax' - `rmin') / `rmin'' 0 1e-9
 
 * =======================================================================
-* TEST 4  the bug being fixed: same point estimates as ivreghdfef,
-*         different (correct) standard errors
+* TEST 4  the failure mode this command exists to avoid.  Building the two
+*         stages by hand -- reghdfe, predict, reghdfe -- recovers the 2SLS
+*         coefficients exactly but not the standard errors, because the second
+*         regression forms its residuals as y - xhat*b instead of y - x*b.
+*         Reproduced from scratch here, so this test depends only on reghdfe.
 * =======================================================================
 di as res _n "{hline 70}"
-di as res "TEST 4  ivreghdfef comparison (same b, different SE)"
+di as res "TEST 4  manual two-stage 2SLS: same b, wrong SE"
 di as res "{hline 70}"
 
 qui ivreghdfe2 `Y' `C' (`X' = `Z'), `FE' `TOL' cluster(idcode)
 tempname bnew snew
 matrix `bnew' = e(b)
 sevec `snew'
+tempvar smp4
+qui gen byte `smp4' = e(sample)
 
-preserve
-capture noisily {
-    qui ivreghdfef `Y' `X' `C', iv(`Z') o(`FE' cluster(idcode))
-    tempname bold sold
-    matrix `bold' = e(b)
-    sevec `sold'
+tempvar xhat
+qui reghdfe `X' `Z' `C' if `smp4', `FE' `TOL' vce(cluster idcode)
+qui predict double `xhat' if `smp4'
+qui reghdfe `Y' `xhat' `C' if `smp4', `FE' `TOL' vce(cluster idcode)
+tempname bman sman
+matrix `bman' = e(b)
+sevec `sman'
+
+* every coefficient must agree: the manual route gets the point estimates right
+schk manual_b_endog                                     ///
+    `=`bman'[1, colnumb(`bman', "`xhat'")]'             ///
+    `=`bnew'[1, colnumb(`bnew', "`X'")]' 1e-6
+foreach v of local C {
+    schk manual_b_`v'                                   ///
+        `=`bman'[1, colnumb(`bman', "`v'")]'            ///
+        `=`bnew'[1, colnumb(`bnew', "`v'")]' 1e-6
 }
-local rc = _rc
-restore
 
-if `rc' == 0 {
-    mchk old_b `bold' `bnew' 1e-6
-    local seo = `sold'[1, colnumb(`sold', "`X'")]
-    local sen = `snew'[1, colnumb(`snew', "`X'")]
-    di as txt "  SE for `X':  ivreghdfef = " %12.8f `seo' "   ivreghdfe2 = " %12.8f `sen'
-    di as txt "  ivreghdfef understates the SE by " %6.2f (1 - `seo'/`sen')*100 "%"
-    if abs(`seo'/`sen' - 1) < 1e-6 {
-        di as err "FAIL  old_se_differs  (the old SE was already correct?)"
-        global NFAIL = $NFAIL + 1
-    }
-    else {
-        di as txt "pass  old_se_differs"
-        global NPASS = $NPASS + 1
-    }
+* ... and the standard error wrong
+local sem = `sman'[1, colnumb(`sman', "`xhat'")]
+local sei = `snew'[1, colnumb(`snew', "`X'")]
+di as txt "  SE for `X':  manual two-stage = " %12.8f `sem' ///
+          "   ivreghdfe2 = " %12.8f `sei'
+di as txt "  the manual second stage understates it by " %6.2f (1 - `sem'/`sei')*100 "%"
+if abs(`sem'/`sei' - 1) < 1e-6 {
+    di as err "FAIL  manual_se_differs  (the manual SE was already correct?)"
+    global NFAIL = $NFAIL + 1
 }
 else {
-    di as txt "  skipped (ivreghdfef not available, rc=`rc')"
+    di as txt "pass  manual_se_differs"
+    global NPASS = $NPASS + 1
 }
 
 * =======================================================================

@@ -472,8 +472,8 @@ program define Estimate, eclass
         ereturn matrix `x' = `X_`x''
     }
 
-    * diagnostics under the names ivreghdfef used, so that existing
-    * reg2docx / esttab scalars() lists keep working unchanged
+    * the four diagnostics under short aliases, so that they can be named
+    * directly in a reg2docx / esttab scalars() list
     ereturn scalar rklm     = e(idstat)
     ereturn scalar rklmp    = e(idp)
     ereturn scalar hansenj  = e(j)

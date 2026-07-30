@@ -3,7 +3,6 @@
 {vieweralsosee "[R] reghdfe" "help reghdfe"}{...}
 {vieweralsosee "[R] ivreg2" "help ivreg2"}{...}
 {vieweralsosee "[R] ivreghdfe" "help ivreghdfe"}{...}
-{vieweralsosee "[R] ivreghdfef" "help ivreghdfef"}{...}
 {vieweralsosee "" "--"}{...}
 {viewerjumpto "Syntax" "ivreghdfe2##syntax"}{...}
 {viewerjumpto "Description" "ivreghdfe2##description"}{...}
@@ -74,17 +73,16 @@ that they can go straight into {help esttab} or {cmd:reg2docx};{p_end}
 F, Kleibergen-Paap rk LM and Hansen J statistics.{p_end}
 
 {pstd}
-{bf:Relationship to} {help ivreghdfef}{bf:.} {cmd:ivreghdfef} produced the same
-three things by running the two stages by hand: {cmd:reghdfe} for the first
-stage, {cmd:predict} to build the fitted values, then {cmd:reghdfe} of the
-outcome on those fitted values. The coefficients that procedure returns are
-correct, but {bf:its second-stage standard errors are not}. A manual second stage
-forms its residuals as {it:y} - {it:xhat}*b, whereas 2SLS requires
+{bf:Why not just build the two stages by hand?} The usual way to get those three
+things is to run {cmd:reghdfe} for the first stage, {cmd:predict} the fitted
+values, then {cmd:reghdfe} the outcome on those fitted values. That recovers the
+2SLS coefficients exactly, but {bf:its standard errors are wrong}. A manual second
+stage forms its residuals as {it:y} - {it:xhat}*b, whereas 2SLS requires
 {it:y} - {it:x}*b. Under homoskedasticity the two differ only by a scalar, but
 under {opt robust} or {opt cluster()} the meat of the sandwich is structurally
-different and no rescaling can repair it. On the worked example below,
-{cmd:ivreghdfef} understates the standard error on the endogenous regressor by
-about 11%.
+different and no rescaling can repair it. On the worked example below, the manual
+route understates the standard error on the endogenous regressor by about 11%,
+which moves its p-value from 0.006 to 0.014.
 
 {pstd}
 {cmd:ivreghdfe2} instead takes its slopes and its variance matrix from
@@ -256,9 +254,10 @@ the following.
 {p2colreset}{...}
 
 {pstd}
-{cmd:e(rklm)}, {cmd:e(rklmp)}, {cmd:e(hansenj)} and {cmd:e(hansenjp)} carry the
-names {cmd:ivreghdfef} used, so existing {cmd:scalars()} lists keep working. The
-two p-values are taken from {cmd:ivreg2} rather than recomputed, which keeps the
+{cmd:e(rklm)}, {cmd:e(rklmp)}, {cmd:e(hansenj)} and {cmd:e(hansenjp)} are short
+aliases for {cmd:e(idstat)}, {cmd:e(idp)}, {cmd:e(j)} and {cmd:e(jp)}, so that
+the four diagnostics can be named directly in a {cmd:scalars()} list. The two
+p-values are taken from {cmd:ivreg2} rather than recomputed, which keeps the
 degrees of freedom right when there is more than one endogenous regressor: the
 Kleibergen-Paap rk LM statistic has L-K+1 of them and the Hansen J statistic
 L-K, where L counts the excluded instruments and K the endogenous regressors.
@@ -273,5 +272,5 @@ L-K, where L counts the excluded instruments and K the endogenous regressors.
 {title:Also see}
 
 {psee}
-Online: {help ivreghdfe}, {help ivreghdfef}, {help ivreg2}, {help reghdfe}
+Online: {help ivreghdfe}, {help ivreg2}, {help reghdfe}
 {p_end}
