@@ -1,5 +1,7 @@
 # ivreghdfe2
 
+English | [简体中文](README_zh.md)
+
 `ivreghdfe` with a corrected second-stage VCE, a reported constant term, extra IV
 diagnostics, and both stages saved as estimation results.
 
@@ -160,3 +162,29 @@ on nothing beyond `ivreghdfe`, `ivreg2` and `reghdfe`. The ones that matter:
 - https://github.com/sergiocorreia/ivreghdfe
 - https://github.com/sergiocorreia/reghdfe
 - http://fmwww.bc.edu/RePEc/bocode/i/ivreg2.html
+
+## Changelog
+
+### 1.0.0 (2026-11-15)
+
+- **Fixed: the second stage reported z statistics where `ivreghdfe` reports t.**
+  With `absorb()`, `ivreghdfe` forces `small` on: its variance matrix carries the
+  small-sample correction and it posts `e(df_r)`, so its table shows t
+  statistics. Version 0.1.0 copied that variance matrix but posted the degrees of
+  freedom only when `small` was typed, so without `small` the second stage showed
+  z statistics and normal p-values against a matrix already scaled for small
+  samples. `ivreghdfe2` now takes `e(df_r)` from the reference run.
+- **What changes:** coefficients and standard errors are unchanged. P-values,
+  confidence intervals and significance stars of the second stage now use the t
+  distribution with `e(df_r)` degrees of freedom, as `ivreghdfe` does. The
+  difference is negligible with many clusters, but with few clusters it is real:
+  with 12 clusters `e(df_r)` = 11, and z p-values are noticeably too small.
+  Results produced with 0.1.0 under `absorb()` without `small` should be re-run.
+- Without `absorb()` nothing changes: z by default, t with `small`, as in
+  `ivreg2`.
+- Tests now compare `e(df_r)` and second-stage p-values against `ivreghdfe` in
+  all nine variance specifications (92/92 passing).
+
+### 0.1.0 (2026-07-30)
+
+- First release.

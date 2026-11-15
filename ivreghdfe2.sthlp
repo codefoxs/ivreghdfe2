@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.1.1 15Nov2026}{...}
+{* *! version 1.0.0 15Nov2026}{...}
 {vieweralsosee "[R] reghdfe" "help reghdfe"}{...}
 {vieweralsosee "[R] ivreg2" "help ivreg2"}{...}
 {vieweralsosee "[R] ivreghdfe" "help ivreghdfe"}{...}

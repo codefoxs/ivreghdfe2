@@ -1,4 +1,4 @@
-*! Version 0.1.1 15Nov2026
+*! Version 1.0.0 15Nov2026
 *! ivreghdfe2: ivreghdfe with a corrected second-stage VCE, a reported constant
 *!              term, extra IV diagnostics, and both stages saved as estimates.
 
