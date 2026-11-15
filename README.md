@@ -163,6 +163,10 @@ on nothing beyond `ivreghdfe`, `ivreg2` and `reghdfe`. The ones that matter:
 - https://github.com/sergiocorreia/reghdfe
 - http://fmwww.bc.edu/RePEc/bocode/i/ivreg2.html
 
+## Author
+
+WeChat official account: 凯恩斯学计量
+
 ## Changelog
 
 ### 1.0.0 (2026-11-15)

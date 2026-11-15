@@ -93,6 +93,10 @@ esttab IV_first IV_second, se scalars(N r2_a cdf rkf rklm hansenj)
 - https://github.com/sergiocorreia/reghdfe
 - http://fmwww.bc.edu/RePEc/bocode/i/ivreg2.html
 
+## 作者
+
+公众号：凯恩斯学计量
+
 ## 更新记录
 
 ### 1.0.0（2026-11-15）

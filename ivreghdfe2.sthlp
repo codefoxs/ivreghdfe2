@@ -268,8 +268,7 @@ L-K, where L counts the excluded instruments and K the endogenous regressors.
 
 {title:Author}
 
-{pstd}codefoxs{break}
-{browse "https://github.com/codefoxs/ivreghdfe2"}
+{pstd}公众号：凯恩斯学计量{p_end}
 
 
 {title:Also see}
