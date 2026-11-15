@@ -32,6 +32,25 @@ program define sevec
     matrix `out' = `ss'
 end
 
+* pvec <out>: two-sided p-values implied by e(b), e(V) and e(df_r) --
+* t when e(df_r) is set, z otherwise (the rule Stata's coefficient table uses)
+capture program drop pvec
+program define pvec
+    args out
+    tempname VV bb pp
+    matrix `VV' = e(V)
+    matrix `bb' = e(b)
+    local k = colsof(`bb')
+    matrix `pp' = J(1, `k', .)
+    forvalues i = 1/`k' {
+        local tt = `bb'[1, `i'] / sqrt(`VV'[`i', `i'])
+        if e(df_r) < . matrix `pp'[1, `i'] = 2 * ttail(e(df_r), abs(`tt'))
+        else           matrix `pp'[1, `i'] = 2 * normal(-abs(`tt'))
+    }
+    matrix colnames `pp' = `: colnames `bb''
+    matrix `out' = `pp'
+end
+
 * mchk <label> <ref matrix> <new matrix> [tol]
 * iterates over the columns of the REFERENCE matrix, so extra columns in the
 * new matrix (namely _cons) are simply ignored
@@ -112,18 +131,26 @@ local i 0
 foreach o of local vcelist {
     local ++i
     qui ivreghdfe `Y' `C' (`X' = `Z'), `FE' `TOL' `o'
-    tempname b1 s1
+    tempname b1 s1 p1
     matrix `b1' = e(b)
     sevec `s1'
+    local df1 = e(df_r)
+    pvec `p1'
 
     qui ivreghdfe2 `Y' `C' (`X' = `Z'), `FE' `TOL' `o'
-    tempname b2 s2
+    tempname b2 s2 p2
     matrix `b2' = e(b)
     sevec `s2'
+    local df2 = e(df_r)
+    pvec `p2'
 
     di as txt "  spec `i': [`o']   smallfac = " %14.10f e(smallfac)
     mchk b_s`i'  `b1' `b2' 1e-8
     mchk se_s`i' `s1' `s2' 1e-8
+    * ivreghdfe forces small under absorb(), so t inference (df_r and the
+    * p-values) must match it whether or not small was typed
+    schk df_s`i' `df2' `df1' 0
+    mchk p_s`i'  `p1' `p2' 1e-8
 
     * the slope block is copied from the reference run, so the comparison above
     * only checks the plumbing.  e(chk_b) / e(chk_v) hold the command's own
@@ -137,6 +164,22 @@ foreach o of local vcelist {
     * smallfac, which scales the _cons row.
     schk chk_b_s`i' `=e(chk_b)' 0 1e-10
     schk chk_v_s`i' `=e(chk_v)' 0 1e-7
+}
+
+* without absorb() ivreghdfe is plain ivreg2: z unless small is typed
+foreach o in "robust" "small robust" {
+    qui ivreghdfe `Y' `C' (`X' = `Z'), `o'
+    local df1 = e(df_r)
+    qui ivreghdfe2 `Y' `C' (`X' = `Z'), `o'
+    local df2 = e(df_r)
+    if (`df1' >= . & `df2' >= .) | (`df1' == `df2') {
+        di as txt "pass  df_noabsorb [`o']  df_r = `df2'"
+        global NPASS = $NPASS + 1
+    }
+    else {
+        di as err "FAIL  df_noabsorb [`o']  `df2' vs `df1'"
+        global NFAIL = $NFAIL + 1
+    }
 }
 
 * =======================================================================

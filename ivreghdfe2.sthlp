@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.1.0 30Jul2026}{...}
+{* *! version 0.1.1 15Nov2026}{...}
 {vieweralsosee "[R] reghdfe" "help reghdfe"}{...}
 {vieweralsosee "[R] ivreg2" "help ivreg2"}{...}
 {vieweralsosee "[R] ivreghdfe" "help ivreghdfe"}{...}
@@ -183,8 +183,11 @@ compute HAC standard errors, so the reported first stage falls back to
 {bf:No} {opt iweight}{bf:.} {cmd:reghdfe} does not accept it.{p_end}
 
 {phang2}
-{bf:t versus z.} As in {cmd:ivreg2}, t statistics are reported only with
-{opt small}; otherwise z statistics are reported.{p_end}
+{bf:t versus z.} Inference follows {cmd:ivreghdfe}. With {opt absorb()},
+{cmd:ivreghdfe} always applies the small-sample correction, so t statistics are
+reported against {cmd:e(df_r)} whether or not {opt small} is typed. Without
+{opt absorb()}, it behaves like {cmd:ivreg2}: t statistics with {opt small},
+z statistics otherwise.{p_end}
 
 
 {marker examples}{...}

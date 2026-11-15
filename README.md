@@ -54,6 +54,11 @@ ivreghdfe2 depvar [exogvars] (endog = instruments) [if] [in] [weight] ,
 Options such as `cluster()`, `robust`, `small`, `gmm2s`, `liml`, `bw()`,
 `kernel()` and `tolerance()` are written directly and passed straight through.
 
+Inference follows `ivreghdfe`. With `absorb()`, `ivreghdfe` always applies the
+small-sample correction, so the second stage reports t statistics against
+`e(df_r)` whether or not `small` is typed. Without `absorb()` it behaves like
+`ivreg2`: t with `small`, z otherwise.
+
 ## Example
 
 ```stata
@@ -104,14 +109,16 @@ the first place. `ivreghdfe2` recovers one like this:
 
 ## Correctness evidence
 
-`tests/test_ivreghdfe2.do` runs 72 checks on `nlswork` (72/72 passing) and depends
+`tests/test_ivreghdfe2.do` runs 92 checks on `nlswork` (92/92 passing) and depends
 on nothing beyond `ivreghdfe`, `ivreg2` and `reghdfe`. The ones that matter:
 
 - **Against `ivreghdfe`** across nine variance specifications (unadjusted,
   `robust`, one- and two-way `cluster()`, each with and without `small`): the
   command's own internal comparison of the *raw* augmented estimates against the
   reference agrees to `e(chk_b)` ≈ 4e-13 on coefficients, and the variance ratio
-  is constant to between 1e-11 and 7e-9.
+  is constant to between 1e-11 and 7e-9. `e(df_r)` and the second-stage
+  p-values also match `ivreghdfe`, so t inference is used whether or not `small`
+  is typed.
 - **The constant term's value** equals `ybar - Xbar'b` to 6e-12.
 - **The constant term's variance.** Instrumenting an endogenous regressor with a
   copy of itself makes 2SLS numerically identical to OLS, so the full `e(b)` and

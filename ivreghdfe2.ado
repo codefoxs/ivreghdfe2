@@ -1,4 +1,4 @@
-*! Version 0.1.0 30Jul2026
+*! Version 0.1.1 15Nov2026
 *! ivreghdfe2: ivreghdfe with a corrected second-stage VCE, a reported constant
 *!              term, extra IV diagnostics, and both stages saved as estimates.
 
@@ -457,8 +457,11 @@ program define Estimate, eclass
     }
 
     * ------------------------------------------------------------ post it all
+    * Follow the reference run, not the user's option: ivreghdfe forces small
+    * whenever absorb() is given, and V above already carries that correction,
+    * so t inference must go with it.  ivreghdfe sets e(df_r) only under small.
     local dofopt
-    if "`small'" != "" & `ref_df_r' < . local dofopt "dof(`ref_df_r')"
+    if `ref_df_r' < . local dofopt "dof(`ref_df_r')"
 
     ereturn post `b' `V', esample(`esample') depname(`depvar') obs(`ref_N') `dofopt'
 
